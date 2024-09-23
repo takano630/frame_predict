@@ -22,14 +22,13 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCh
 from PIL import Image
 
 #return (num_video, num_frame, 224, 224, 3)
-def load_images(path, seqlen=4):
+def load_images(path, seqlen=10):
 
     video_path_list = glob.glob(path)
 
     return_images = []
 
     min_frames = 10000
-    frame_num = seqlen
 
     for path in video_path_list:
         images_path = glob.glob(path + "/*")
@@ -42,20 +41,31 @@ def load_images(path, seqlen=4):
 
     for path in video_path_list:
         images_path = glob.glob(path + "/*")
-        image_list = []
-        for i in range(1,min_frames):
+        image_list_list = []
+        for i in range(seqlen):
+            image_list_list.append([])
+
+        print(image_list_list)
+        
+        for i in range(min_frames):
             image_path = images_path[i]
             image = cv2.imread(image_path)
             resized_image = cv2.resize(image, (224, 224))
-            image_list.append(resized_image)
+            if i < seqlen-1 :
+                for l in range(i):
+                    print(l)
+                    image_list_list[l].append(resized_image)
+            else :
+                for l in range(len(image_list_list)):
+                    image_list_list[l].append(resized_image)
+                    if len(image_list_list[l]) % seqlen == 0 and len(image_list_list[l]) != 0:
+                        return_images.append(np.array(image_list_list[l]))
+                        print(np.array(image_list_list[l]).shape)
+                        image_list_list[l] = []
             del image
+            del resized_image
             gc.collect()
-            if i % frame_num == 0 and i !=0:
-                return_images.append(np.array(image_list))
-                print(np.array(image_list).shape)
-                image_list = []
-
-        del image_list
+        del image_list_list
         gc.collect()
 
     return np.array(return_images)/255.
@@ -92,6 +102,7 @@ def save_list(images, num): #takes in input a list of images and plot them
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
     parser.add_argument('--root_dir',default="Data", type=str)
+    parser.add_argument('--load',default="load", type=str)
     parser.add_argument('--seqlen',default=4, type=int)
     args = parser.parse_args()
     return args
@@ -101,6 +112,7 @@ if __name__ == '__main__':
     args = parse_args()
     train_path = args.root_dir +"/*"
     seqlen = args.seqlen
+    load_file = args.load
     dataset = load_images(train_path, seqlen=seqlen)
     
     video_num = dataset.shape[0]
@@ -168,7 +180,7 @@ if __name__ == '__main__':
 
     model.summary()
 
-    model.load_weights('model1_weights1.h5')
+    model.load_weights(load_file)
 
     #Model is evaluated using the test image generator
     evaluation = model.evaluate(
@@ -197,7 +209,10 @@ if __name__ == '__main__':
         mse_list.append(mse_mean)
 
     print("max:" + str(max(mse_list)))
+    print("max_index:" + str(mse_list.index(max(mse_list))))
     print("min:" + str(min(mse_list)))
     print("ave:" + str(np.mean(mse_list)))
 
-
+    x = list(range(len(mse_list)))
+    plt.plot(x, mse_list)
+    plt.savefig('mse.png')
