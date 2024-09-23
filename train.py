@@ -90,7 +90,9 @@ def image_generator(dataset,batchsize=1,seqlen=4, num_frames=20):
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
     parser.add_argument('--root_dir',default="Data", type=str)
+    parser.add_argument('--save',default="save_file", type=str)
     parser.add_argument('--seqlen',default=10, type=int)
+    parser.add_argument('--batch',default=4, type=int)
     args = parser.parse_args()
     return args
 
@@ -101,6 +103,11 @@ if __name__ == '__main__':
     seqlen = args.seqlen
     dataset = load_images(train_path, seqlen=seqlen)
     
+
+    if not os.path.exists(args.save) :
+        with open(args.save, mode='w') as f : 
+            f.write('')
+
     video_num = dataset.shape[0]
     print("dataset_num:" + str(video_num))
     
@@ -127,7 +134,7 @@ if __name__ == '__main__':
             print(e)
 
     #バッチサイズをi以外にするとエラーが出ます
-    batch_size = 1
+    batch_size = args.batch
     train_gen = image_generator(trainset,seqlen=seqlen, batchsize=batch_size,num_frames = trainset.shape[1] )
     val_gen = image_generator(valset,seqlen=seqlen, batchsize=batch_size,num_frames = valset.shape[1])
 
@@ -201,7 +208,7 @@ if __name__ == '__main__':
     validation_steps = valset.shape[0] // batch_size
 
     
-    checkpoint_filepath = './model1_weights1.h5'
+    checkpoint_filepath = args.save
 
     #Save best model weights
     model_checkpoint = ModelCheckpoint(
@@ -225,3 +232,5 @@ if __name__ == '__main__':
         callbacks=[early_stopping, reduce_lr, model_checkpoint],
         verbose=1
     )
+
+    print("train complete")
