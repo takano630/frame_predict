@@ -98,7 +98,6 @@ def save_list(images, num): #takes in input a list of images and plot them
             pil_img.save(file_name)
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='extract optical flows')
     parser.add_argument('--root_dir',default="Data", type=str)
@@ -194,6 +193,7 @@ if __name__ == '__main__':
 
     shutil.rmtree('log')
     os.mkdir('log')
+    
 
     mse_list=[]
 
@@ -207,6 +207,13 @@ if __name__ == '__main__':
         mse_mean = (mse[0] + mse[1] + mse[2]) /3
         print(mse_mean)
         mse_list.append(mse_mean)
+        se_image = se.mean(axis=2)
+        plt.figure()
+        plt.imshow(se_image, cmap="jet")
+        file_name = 'log/' + str(k) + '_heatmap.png'
+        plt.savefig(file_name)
+        plt.close()
+
 
     print("max:" + str(max(mse_list)))
     print("max_index:" + str(mse_list.index(max(mse_list))))
