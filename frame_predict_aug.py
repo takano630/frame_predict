@@ -21,6 +21,9 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCh
 
 from PIL import Image
 
+
+#change!
+
 #return (num_video, num_frame, 224, 224, 3)
 def load_images(path, seqlen=4):
 
